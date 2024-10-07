@@ -16,12 +16,11 @@ func main(){
 	currentCollection, err := LoadCollection(collectionName)
 	if err != nil { // If collection does not exist, make new one under that name
 		currentCollection := MakeNewCollection(collectionName)
-		fmt.Println("CREATED NEW COLLECTION: " + collectionName)
+		fmt.Println("CREATED NEW COLLECTION: " + currentCollection.name)
 	} else {
-		fmt.Println("LOADED COLLECTION: " + collectionName)
+		fmt.Println("LOADED COLLECTION: " + currentCollection.name)
 	}
 
-	var command string
 	reader := bufio.NewReader(os.Stdin)
 
 	for { // Command loop
@@ -42,5 +41,4 @@ func main(){
 		fmt.Println() // Go to newline for next command
 	
 	}
-
 }		

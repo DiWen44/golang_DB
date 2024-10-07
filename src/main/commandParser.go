@@ -2,7 +2,6 @@ package main
 
 import  (
 	"strings"
-	"errors"
 	"fmt"
 )
 
@@ -26,7 +25,7 @@ func (e *commandError) Error() string {
 
 
 func parse(command string) error {
-	tokens := strings.split(command, " ")
+	tokens := strings.Split(command, " ")
 	switch opcode := tokens[0]; opcode {
 
 		case "createdb":
