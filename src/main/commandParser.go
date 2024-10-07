@@ -3,54 +3,32 @@ package main
 import  (
 	"strings"
 	"fmt"
+	"os"
 )
 
 
-// Error type for command errors picked up in parse()
-// 
-// FIELDS:
-//  section - the section (part of the command) in question that caused the error
-//  message - Error message
-type commandError struct {
-	section string
-	message string
-}
-
-
-// commandError's implementation of Error()
-// This exists to allow commandError to satisfy the builtin error interface
-func (e *commandError) Error() string {
-	return fmt.Sprintf("'%s' -- %s", e.section, e.message)
-}
-
-
-func parse(command string) error {
+func Parse(command string, coll *Collection) {
 	tokens := strings.Split(command, " ")
-	switch opcode := tokens[0]; opcode {
+	opcode := tokens[0]
+	switch opcode {
 
 		case "createdb":
+			coll.NewDB(tokens[1])
 
 		case "dropdb":
+			coll.DropDB(tokens[1])
 
 		case "renamedb":
+			coll.RenameDB(tokens[1], tokens[2])
 
-		case "insert":
+		case "printcoll":
+			coll.ListDBs()
 
-		case "update":
-
-		case "select":
-
-		case "delete":
-
-		case "createind":
-
-		case "deleteind":
+		case "exit":
+			fmt.Println("Exiting...")
+			os.Exit(0)
 
 		default:
-			return &commandError{opcode, "INVALID OPERATION"}
-
+			fmt.Println("INVALID COMMAND: " + opcode)
 	}
-
-	return nil // If no errors were encountered
-
 }

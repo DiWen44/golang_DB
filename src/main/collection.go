@@ -17,9 +17,9 @@ import  (
 //	path - file path of the directory associated w/ the collection
 //  dbs - map of databases in collection: key is database name, value is a pointer to database object
 type Collection struct {
-	name string
-	path string
-	dbs map[string]*Database
+	Name string
+	Path string
+	DBs map[string]*Database
 }
 
 
@@ -36,7 +36,7 @@ func LoadCollection(name string) (*Collection, error) {
 	collection_path := fmt.Sprintf("%s/%s", os.Getenv("COLLECTIONS_DIR"), name)
 	collection_dir, err := os.Open(collection_path)
 	if err != nil {
-		return nil, &collectionError{name, fmt.Sprintf("Could not open collection '%s'", name)}
+		return nil, err
 	}
 
 	// Get database files from collection directory
@@ -57,7 +57,7 @@ func LoadCollection(name string) (*Collection, error) {
     	dbs[dbName] = loadDB(dbFilePath)
     }  
 
-    return &Collection{name, collection_path, dbs}, nil
+    return &Collection{Name : name, Path : collection_path, DBs : dbs}, nil
 }
 
 
@@ -79,7 +79,7 @@ func MakeNewCollection(name string) *Collection {
 
 	// Empty slice of dbs, since collection is new
 	dbs := make(map[string]*Database)
-	return &Collection{name, collection_path, dbs}
+	return &Collection{Name : name, Path : collection_path, DBs : dbs}
 }
 
 
@@ -90,7 +90,7 @@ func MakeNewCollection(name string) *Collection {
 func (coll *Collection) NewDB(DBName string) {
 
 	// Create JSON file for DB
-	DBPath := fmt.Sprintf("%s/%s.csv", coll.path, DBName)
+	DBPath := fmt.Sprintf("%s/%s.csv", coll.Path, DBName)
 	file, err := os.Create(DBPath)
 	if err != nil {
 		log.Fatal(err)
@@ -98,7 +98,7 @@ func (coll *Collection) NewDB(DBName string) {
 	file.Close()
 
 	// Add DB to active collection
-	coll.dbs[DBName] = &Database{DBPath}
+	coll.DBs[DBName] = &Database{FilePath : DBPath}
 }
 
 
@@ -125,19 +125,17 @@ func loadDB(filePath string) *Database {
 //
 // PARAMS:
 //	dbName - name of DB to drop
-func (coll *Collection) DropDB(dbName string) error {
+func (coll *Collection) DropDB(dbName string) {
 
 	// Delete DB file
-	filepath := fmt.Sprintf("%s/%s.csv", coll.path, dbName)
+	filepath := fmt.Sprintf("%s/%s.csv", coll.Path, dbName)
 	err := os.Remove(filepath)
 	if err != nil {
-		return &collectionError{dbName, fmt.Sprintf("Could not drop database: '%s'", dbName)}
+		log.Fatal(err)
 	}
 
 	// Remove DB from collection object's DB map
-	delete(coll.dbs, dbName)
-
-	return nil
+	delete(coll.DBs, dbName)
 }
 
 
@@ -149,13 +147,13 @@ func (coll *Collection) DropDB(dbName string) error {
 func (coll *Collection) RenameDB(oldDBName string, newDBName string) {
 
 	// Rename DB in collection by deleting old pair and adding new pair under new name
-	hold := coll.dbs[oldDBName]
-	delete(coll.dbs, oldDBName)
-	coll.dbs[newDBName] = hold
+	db := coll.DBs[oldDBName]
+	delete(coll.DBs, oldDBName)
+	coll.DBs[newDBName] = db
 
 	// Rename DB file
-	oldPath := fmt.Sprintf("%s/%s", coll.path, oldDBName)
-	newPath := fmt.Sprintf("%s/%s", coll.path, newDBName)
+	oldPath := db.FilePath
+	newPath := fmt.Sprintf("%s/%s.csv", coll.Path, newDBName)
 	err := os.Rename(oldPath, newPath)
 	if err != nil {
 		log.Fatal(err)
@@ -165,25 +163,7 @@ func (coll *Collection) RenameDB(oldDBName string, newDBName string) {
 
 // Outputs a list of all databases in the collection
 func (coll *Collection) ListDBs() {
-	for name, _ := range coll.dbs {
+	for name, _ := range coll.DBs {
 		fmt.Println(name)
 	}
-}
-
-
-// Error type for collection errors
-// 
-// FIELDS:
-//  name - name of the collection
-//  message - Error message
-type collectionError struct {
-	name string
-	message string
-}
-
-
-// collectionError's implementation of Error()
-// This exists to allow collectionError to satisfy the builtin error interface
-func (e *collectionError) Error() string {
-	return fmt.Sprintf("'%s' -- %s", e.name, e.message)
 }
