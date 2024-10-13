@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"fmt"
 	"log"
+	"strings"
 )
 
 
@@ -27,6 +28,7 @@ func main(){
 		
 		fmt.Printf("> ")
 		command, err := reader.ReadString('\n')
+		command = strings.Trim(command, "\n")// Remove \n at end of command
 		if err != nil {
 			log.Fatal(err)
 		}

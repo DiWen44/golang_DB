@@ -52,7 +52,7 @@ func LoadCollection(name string) (*Collection, error) {
     // Load databases into dbs map
     dbs := make(map[string]*Database)
     for _, filename := range filenames {
-    	dbName := filename[:len(filename)-5] // Remove last 5 characters (i.e. '.json' extension) from filename to get database's name
+    	dbName := filename[:len(filename)-4] // Remove last 5 characters (i.e. '.json' extension) from filename to get database's name
     	dbFilePath := fmt.Sprintf("%s/%s", collection_path, filename)
     	dbs[dbName] = loadDB(dbFilePath)
     }  
@@ -146,11 +146,11 @@ func (coll *Collection) DropDB(dbName string) {
 // 	newDBName - New name for DB
 func (coll *Collection) RenameDB(oldDBName string, newDBName string) {
 
-	// Rename DB in collection by deleting old pair and adding new pair under new name
+	// Rename DB in collection by adding new pair under new name and deleting old entry
 	db := coll.DBs[oldDBName]
-	delete(coll.DBs, oldDBName)
 	coll.DBs[newDBName] = db
-
+	delete(coll.DBs, oldDBName)
+	
 	// Rename DB file
 	oldPath := db.FilePath
 	newPath := fmt.Sprintf("%s/%s.csv", coll.Path, newDBName)

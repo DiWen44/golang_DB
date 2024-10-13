@@ -10,21 +10,21 @@ import  (
 func Parse(command string, coll *Collection) {
 	tokens := strings.Split(command, " ")
 	opcode := tokens[0]
-	switch opcode {
+	switch {
 
-		case "createdb":
+		case opcode == "createdb":
 			coll.NewDB(tokens[1])
 
-		case "dropdb":
+		case opcode == "dropdb":
 			coll.DropDB(tokens[1])
 
-		case "renamedb":
+		case opcode == "renamedb":
 			coll.RenameDB(tokens[1], tokens[2])
 
-		case "printcoll":
+		case opcode == "printcoll":
 			coll.ListDBs()
 
-		case "exit":
+		case opcode == "exit":
 			fmt.Println("Exiting...")
 			os.Exit(0)
 
