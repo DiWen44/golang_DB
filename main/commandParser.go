@@ -34,19 +34,47 @@ func Parse(command string, coll *Collection) {
 		case opcode == "printcoll":
 			coll.ListDBs()
 
-		case opcode == "insert"
+		case opcode == "columns":
 			dbName := tokens[1]
 			db, found_key := coll.DBs[dbName]
 			// Raise non-fatal error & return from method if invalid database name provided
 			if !found_key {
-				err = parserError{ fmt.Sprintf("Database %s does not exist in collection %s", dbName, coll.Name) }
+				err := parserError{ fmt.Sprintf("Database %s does not exist in collection %s", dbName, coll.Name) }
 				fmt.Println(err.Error())
 				return
 			}
 
-			dbErr := db.Insert()
-			
+			for _, name := range db.Columns {
+				fmt.Println(name)
+			}
 
+		case opcode == "insert":
+			dbName := tokens[1]
+			db, found_key := coll.DBs[dbName]
+			// Raise non-fatal error & return from method if invalid database name provided
+			if !found_key {
+				err := parserError{ fmt.Sprintf("Database %s does not exist in collection %s", dbName, coll.Name) }
+				fmt.Println(err.Error())
+				return
+			}
+
+			// Parse columns & values from remaining command tokens
+			columns := make([]string,0,10)
+			values := make([]string,0,10)
+			target := &columns
+			for i := 2; i < len(tokens); i++ {
+				if tokens[i] == "|" { // Pipe char seperates columns from values
+					target = &values
+					continue
+				}
+
+				*target = append(*target, tokens[i])
+			}
+
+			dbErr := db.Insert(columns, values)
+			if dbErr != nil {
+				fmt.Println(dbErr.Error())
+			}
 
 
 		case opcode == "exit":

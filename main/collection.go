@@ -4,6 +4,8 @@ import  (
 	"os"
 	"fmt"
 	"log"
+	"bufio"
+	"strings"
 	"github.com/joho/godotenv"
 )
 
@@ -113,9 +115,19 @@ func (coll *Collection) NewDB(DBName string) {
 //	filePath - path to JSON file associated with DB to load
 func loadDB(filePath string) *Database {
 	// Load DB file
+	file, err := os.Open(filePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	lineScanner := bufio.NewScanner(file)
 
+	// Read CSV columns from 1st line of file
+	lineScanner.Scan()
+	columnStr := lineScanner.Text()
+	columns := strings.Split(columnStr, ",")
 
-	res := &Database{filePath}
+	res := &Database{filePath, columns}
 	return res
 }
 

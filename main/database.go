@@ -2,7 +2,8 @@ package main
 
 import (
 	"os"
-	"reflect"
+	"fmt"
+	"log"
 )
 
 // Struct for a database
@@ -34,52 +35,51 @@ func (e *dbError) Error() string{
 // PARAMS:
 //	columns - a list of columns to add values for.
 //	values - values[i] is the value to be added into the entry for column[i]
-func (db *Database) Insert(columns []string, values []string) error{
+func (db *Database) Insert(columns []string, values []string) error {
+
+	fmt.Println(columns)
+	fmt.Println(values)
 
 	// Mismatch between columns and values
 	if len(columns) != len(values){
-		return &dbError( fmt.Sprintf("Provided %d columns but %d values", len(columns), len(values)) )
+		return &dbError{ fmt.Sprintf("Provided %d columns but %d values", len(columns), len(values)) }
 	}
 
 	// Invalid columns listed
 	columns_valid, invalid_col := isSubset(columns, db.Columns)
 	if !columns_valid {
-		return &dbError( fmt.Sprintf("Column '%s' does not exist in database", invalid_col) )
+		return &dbError{ fmt.Sprintf("Column '%s' does not exist in database", invalid_col) }
 	}
 
-
-	colValuesMap = slicesToMap(columns, values)
+	colValuesMap := slicesToMap(columns, values)
 	entry := ""
-	cell := ""
-	for col := range db.Columns {
+	
+	for _, col := range db.Columns {
 
 		// User has provided a value for this column if col in colValuesMap
 		value, value_provided := colValuesMap[col]
-
-		if value_provided {
-			cell = value
-		}
-		else { // Add null CSV cell if no value provided
-			cell = ""
-		}
-
-		entry += cell
-		if col != db.Columns[len(db.Columns)-1]{  // If cell not at last column, add comma to end
+		if value_provided { entry += value }
+		
+		// If cell not at last column, add comma to end, Otherwise add newline
+		if col != db.Columns[len(db.Columns)-1] {  
 			entry += ","
+		} else { 
+			entry += "\n"
 		}
 	}
 
 	// Open db file
-	file, err := os.OpenFile(db.FilePath, os.O_APPEND, 0644)
+	file, err := os.OpenFile(db.FilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		return &dbError( fmt.Sprintf("Couldn't open file %s", db.FilePath) )
+		return &dbError{ fmt.Sprintf("Couldn't open file %s", db.FilePath) }
 	}
-	defer file.close()
+	defer file.Close()
 
 	// Write entry to CSV file directly
-	_, err := file.WriteString(entry)
+	_, err = file.WriteString(entry)
 	if err != nil {
-		return &dbError( fmt.Sprintf("Couldn't write to file %s", db.FilePath) )
+		log.Fatal(err)
+		return &dbError{ fmt.Sprintf("Couldn't write to file %s", db.FilePath) }
 	}
 		
 	return nil
@@ -87,7 +87,7 @@ func (db *Database) Insert(columns []string, values []string) error{
 
 
 // Private utility function to check if a slice of strings is a subset of another.
-// If is a subset, returns true and nil
+// If is a subset, returns true and an empty string
 // If not a subset, returns false along with the first string found not to be in the superset
 //
 // PARAMS:
@@ -101,12 +101,12 @@ func isSubset(a1 []string, a2 []string) (bool, string) {
 
 	// Make set-type structure from a2
 	a2Set := make(map[string]bool)
-	for s2 : range a2{
+	for _, s2 := range a2{
 		a2Set[s2] = true
 	}
 
 	// Check if all strings in a1 are present in a2
-	for s1 : range a1{
+	for _, s1 := range a1{
 		// If a key is not present in the map
 		// Golang initializes that key's value to the zero value of it's type
 		// e.g. for bool-type values, this will be false
@@ -115,7 +115,7 @@ func isSubset(a1 []string, a2 []string) (bool, string) {
 		}
 	}
 
-	return true, nil
+	return true, ""
 }
 
 
@@ -131,7 +131,7 @@ func slicesToMap(a1 []string, a2 []string) map[string]string {
 
 	res := make(map[string]string)
 	for i := 0; i < len(a1); i++{
-		res[a1[i]] := a2[i]
+		res[a1[i]] = a2[i]
 	}
 
 	return res
