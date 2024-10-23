@@ -33,27 +33,24 @@ func (e *dbError) Error() string{
 // Columns not specified in the parameters will be set to an empty cell for the new entry.
 //
 // PARAMS:
-//	columns - a list of columns to add values for.
+//	providedCols - a list of (user-provided) columns to add values for.
 //	values - values[i] is the value to be added into the entry for column[i]
-func (db *Database) Insert(columns []string, values []string) error {
-
-	fmt.Println(columns)
-	fmt.Println(values)
+func (db *Database) Insert(providedCols []string, values []string) error {
 
 	// Mismatch between columns and values
-	if len(columns) != len(values){
-		return &dbError{ fmt.Sprintf("Provided %d columns but %d values", len(columns), len(values)) }
+	if len(providedCols) != len(values){
+		return &dbError{ fmt.Sprintf("Provided %d columns but %d values", len(providedCols), len(values)) }
 	}
 
-	// Invalid columns listed
-	columns_valid, invalid_col := isSubset(columns, db.Columns)
-	if !columns_valid {
-		return &dbError{ fmt.Sprintf("Column '%s' does not exist in database", invalid_col) }
+	// Invalid column(s) listed
+	columnsValid, invalidCol := isSubset(providedCols, db.Columns)
+	if !columnsValid {
+		return &dbError{ fmt.Sprintf("Column '%s' does not exist in database", invalidCol) }
 	}
 
-	colValuesMap := slicesToMap(columns, values)
+	// Create CSV entry
+	colValuesMap := slicesToMap(providedCols, values)
 	entry := ""
-	
 	for _, col := range db.Columns {
 
 		// User has provided a value for this column if col in colValuesMap
