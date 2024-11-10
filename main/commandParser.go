@@ -34,7 +34,8 @@ func Parse(command string, coll *Collection) {
 		case opcode == "printcoll":
 			coll.ListDBs()
 
-		case opcode == "columns":
+		case opcode == "columns": // Print all columns of DB
+
 			dbName := tokens[1]
 			db, found_key := coll.DBs[dbName]
 			// Raise non-fatal error & return from method if invalid database name provided
