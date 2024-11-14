@@ -15,32 +15,72 @@ func (e *parserError) Error() string {
 	return fmt.Sprintf("PARSER ERROR: %s", e.message)
 }
 
+// Used to check if adequate number of tokens/arguments provided for command
+//
+// PARAMS:
+//
+//	expected - how many args were expected
+//	args - array of arguments (not including command opcode itself)
+//
+// RETURNS:
+//
+//	parser error w/ appropriate message if wrong no. of args
+//	otherwise nil
+func errorIfUnexpectedNumArgs(expected int, args []string) *parserError {
+	if len(args) != expected {
+		return &parserError{fmt.Sprintf("EXPECTED %d ARGUMENTS, GOT %d", expected, len(args))}
+	}
+	return nil
+}
+
 func Parse(command string, coll *Collection) {
 	tokens := strings.Split(command, " ")
 	opcode := tokens[0]
+	args := tokens[1:]
 	switch {
 
 	case opcode == "createdb":
 		// New DB name is first argument, rest are all new column names
-		coll.NewDB(tokens[1], tokens[2:]...)
+		coll.NewDB(args[0], args[1:]...)
 
 	case opcode == "dropdb":
-		coll.DropDB(tokens[1])
+		err := errorIfUnexpectedNumArgs(1, args)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+
+		err2 := coll.DropDB(args[0])
+		if err2 != nil {
+			fmt.Println(err2.Error()) // Display any errors passed forward by dropDB
+		}
 
 	case opcode == "renamedb":
-		coll.RenameDB(tokens[1], tokens[2])
+		err := errorIfUnexpectedNumArgs(2, args)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
 
-	case opcode == "printcoll":
+		err2 := coll.RenameDB(args[0], args[1])
+		if err2 != nil {
+			fmt.Println(err2.Error())
+		}
+
+	case opcode == "listdbs":
 		coll.ListDBs()
 
 	case opcode == "columns": // Print all columns of DB
 
-		dbName := tokens[1]
-		db, found_key := coll.DBs[dbName]
-		// Raise non-fatal error & return from method if invalid database name provided
-		if !found_key {
-			err := parserError{fmt.Sprintf("Database %s does not exist in collection %s", dbName, coll.Name)}
+		err := errorIfUnexpectedNumArgs(1, args)
+		if err != nil {
 			fmt.Println(err.Error())
+		}
+
+		dbName := args[0]
+		db, foundKey := coll.DBs[dbName]
+		// Raise non-fatal error & return from method if invalid database name provided
+		if !foundKey {
+			err2 := collError{fmt.Sprintf("NO DATABASE CALLED '%s' IN COLLECTION '%s'", dbName, coll.Name)}
+			fmt.Println(err2.Error())
 			return
 		}
 
@@ -49,26 +89,25 @@ func Parse(command string, coll *Collection) {
 		}
 
 	case opcode == "insert":
-		dbName := tokens[1]
-		db, found_key := coll.DBs[dbName]
+		dbName := args[0]
+		db, foundKey := coll.DBs[dbName]
 		// Raise non-fatal error & return from method if invalid database name provided
-		if !found_key {
-			err := parserError{fmt.Sprintf("Database %s does not exist in collection %s", dbName, coll.Name)}
+		if !foundKey {
+			err := collError{fmt.Sprintf("NO DATABASE CALLED '%s' IN COLLECTION '%s'", dbName, coll.Name)}
 			fmt.Println(err.Error())
 			return
 		}
 
-		// Parse columns & values from remaining command tokens
+		// Parse columns & values from remaining arguments
 		columns := make([]string, 0, 10)
 		values := make([]string, 0, 10)
 		target := &columns
-		for i := 2; i < len(tokens); i++ {
-			if tokens[i] == "|" { // Pipe char seperates columns from values
+		for i := 1; i < len(args); i++ {
+			if args[i] == "|" { // Pipe char seperates columns from values
 				target = &values
 				continue
 			}
-
-			*target = append(*target, tokens[i])
+			*target = append(*target, args[i])
 		}
 
 		dbErr := db.Insert(columns, values)

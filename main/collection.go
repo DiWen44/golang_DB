@@ -25,6 +25,15 @@ type Collection struct {
 	DBs  map[string]*database.Database
 }
 
+// Error type for all collection-related errors
+type collError struct {
+	message string
+}
+
+func (e *collError) Error() string {
+	return fmt.Sprintf("COLLECTION ERROR: %s", e.message)
+}
+
 // LoadCollection Loads an existant collection from the filesystem
 // If collection of specified name does not exist, returns a collectionError
 //
@@ -147,17 +156,18 @@ func loadDB(filePath string) *database.Database {
 // PARAMS:
 //
 //	dbName - name of DB to drop
-func (coll *Collection) DropDB(dbName string) {
+func (coll *Collection) DropDB(dbName string) error {
 
 	// Delete DB file
 	filepath := fmt.Sprintf("%s/%s.csv", coll.Path, dbName)
 	err := os.Remove(filepath)
 	if err != nil {
-		log.Fatal(err)
+		return &collError{fmt.Sprintf("NO DATABASE CALLED '%s' IN COLLECTION '%s'", dbName, coll.Name)}
 	}
 
 	// Remove DB from collection object's DB map
 	delete(coll.DBs, dbName)
+	return nil
 }
 
 // RenameDB Rename a database in the collection
@@ -166,10 +176,13 @@ func (coll *Collection) DropDB(dbName string) {
 //
 //	oldDBName - current name of DB to rename
 //	newDBName - New name for DB
-func (coll *Collection) RenameDB(oldDBName string, newDBName string) {
+func (coll *Collection) RenameDB(oldDBName string, newDBName string) error {
 
 	// Rename DB in collection by adding new pair under new name and deleting old entry
-	db := coll.DBs[oldDBName]
+	db, foundKey := coll.DBs[oldDBName]
+	if !foundKey {
+		return &collError{fmt.Sprintf("NO DATABASE CALLED '%s' IN COLLECTION '%s'", oldDBName, coll.Name)}
+	}
 	coll.DBs[newDBName] = db
 	delete(coll.DBs, oldDBName)
 
@@ -180,6 +193,8 @@ func (coll *Collection) RenameDB(oldDBName string, newDBName string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	return nil
 }
 
 // ListDBs Outputs a list of all databases in the collection
