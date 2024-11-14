@@ -1,18 +1,17 @@
 package main
 
 import (
-	"os"
 	"bufio"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 )
 
-
-func main(){
+func main() {
 
 	// Desired collection to open is provided as an OS arg
-	collectionName := os.Args[1] 
+	collectionName := os.Args[1]
 
 	currentCollection, err := LoadCollection(collectionName)
 	if err != nil { // If collection does not exist, make new one under that name
@@ -25,16 +24,16 @@ func main(){
 	reader := bufio.NewReader(os.Stdin)
 
 	for { // Command loop
-		
+
 		fmt.Printf("> ")
 		command, err := reader.ReadString('\n')
-		command = strings.Trim(command, "\n")// Remove \n at end of command
+		command = strings.Trim(command, "\n") // Remove \n at end of command
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		Parse(command, currentCollection)
 		fmt.Println() // Go to newline for next command
-	
+
 	}
-}		
+}

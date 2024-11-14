@@ -1,35 +1,35 @@
 package main
 
-import  (
-	"os"
-	"fmt"
-	"log"
+import (
 	"bufio"
-	"strings"
+	"fmt"
 	"github.com/joho/godotenv"
+	"log"
+	"os"
+	"strings"
 )
-
 
 // Represents a collection (a group of databases)
 // Used to hold the currently active collection that the user is operating on
 // In the filesystem, a collection is a directory that holds JSON files, each of them representing a database
-// 
+//
 // FIELDS:
-//	name - name of the collection
-//	path - file path of the directory associated w/ the collection
-//  dbs - map of databases in collection: key is database name, value is a pointer to database object
+//
+//		name - name of the collection
+//		path - file path of the directory associated w/ the collection
+//	 dbs - map of databases in collection: key is database name, value is a pointer to database object
 type Collection struct {
 	Name string
 	Path string
-	DBs map[string]*Database
+	DBs  map[string]*Database
 }
-
 
 // Loads an existant collection from the filesystem
 // If collection of specified name does not exist, returns a collectionError
 //
 // PARAMS:
-// 	name - name of the collection
+//
+//	name - name of the collection
 func LoadCollection(name string) (*Collection, error) {
 
 	// Get collection directory
@@ -44,29 +44,29 @@ func LoadCollection(name string) (*Collection, error) {
 	// Get database files from collection directory
 	filenames, err := collection_dir.Readdirnames(0)
 	if err != nil {
-        log.Fatal(err)
-    }
-    err = collection_dir.Close()
-    if err != nil {
-        log.Fatal(err)
-    }
+		log.Fatal(err)
+	}
+	err = collection_dir.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
 
-    // Load databases into dbs map
-    dbs := make(map[string]*Database)
-    for _, filename := range filenames {
-    	dbName := filename[:len(filename)-4] // Remove last 5 characters (i.e. '.json' extension) from filename to get database's name
-    	dbFilePath := fmt.Sprintf("%s/%s", collection_path, filename)
-    	dbs[dbName] = loadDB(dbFilePath)
-    }  
+	// Load databases into dbs map
+	dbs := make(map[string]*Database)
+	for _, filename := range filenames {
+		dbName := filename[:len(filename)-4] // Remove last 5 characters (i.e. '.json' extension) from filename to get database's name
+		dbFilePath := fmt.Sprintf("%s/%s", collection_path, filename)
+		dbs[dbName] = loadDB(dbFilePath)
+	}
 
-    return &Collection{Name : name, Path : collection_path, DBs : dbs}, nil
+	return &Collection{Name: name, Path: collection_path, DBs: dbs}, nil
 }
-
 
 // Makes an entirely new collection
 //
 // PARAMS:
-// 	name - name of the new collection
+//
+//	name - name of the new collection
 func MakeNewCollection(name string) *Collection {
 
 	// Make collection directory
@@ -81,13 +81,13 @@ func MakeNewCollection(name string) *Collection {
 
 	// Empty slice of dbs, since collection is new
 	dbs := make(map[string]*Database)
-	return &Collection{Name : name, Path : collection_path, DBs : dbs}
+	return &Collection{Name: name, Path: collection_path, DBs: dbs}
 }
-
 
 // Creates a new database in the filesystem and add it to the collection
 //
 // PARAMS:
+//
 //	DBName - name of new DB
 func (coll *Collection) NewDB(DBName string) {
 
@@ -100,9 +100,8 @@ func (coll *Collection) NewDB(DBName string) {
 	file.Close()
 
 	// Add DB to active collection
-	coll.DBs[DBName] = &Database{FilePath : DBPath}
+	coll.DBs[DBName] = &Database{FilePath: DBPath}
 }
-
 
 // Loads a database from an existing file into a database object
 // Returns a pointer to the new database object
@@ -112,6 +111,7 @@ func (coll *Collection) NewDB(DBName string) {
 // and so doesn't add the DB to the collection object's DB map
 //
 // PARAMS:
+//
 //	filePath - path to JSON file associated with DB to load
 func loadDB(filePath string) *Database {
 	// Load DB file
@@ -131,11 +131,11 @@ func loadDB(filePath string) *Database {
 	return res
 }
 
-
 // Drops a database, removing it from the collection and deleting it's JSON file from the filesystem
 // Returns a collection Error
 //
 // PARAMS:
+//
 //	dbName - name of DB to drop
 func (coll *Collection) DropDB(dbName string) {
 
@@ -150,19 +150,19 @@ func (coll *Collection) DropDB(dbName string) {
 	delete(coll.DBs, dbName)
 }
 
-
 // Rename a database in the collection
 //
 // PARAMS:
+//
 //	oldDBName - current name of DB to rename
-// 	newDBName - New name for DB
+//	newDBName - New name for DB
 func (coll *Collection) RenameDB(oldDBName string, newDBName string) {
 
 	// Rename DB in collection by adding new pair under new name and deleting old entry
 	db := coll.DBs[oldDBName]
 	coll.DBs[newDBName] = db
 	delete(coll.DBs, oldDBName)
-	
+
 	// Rename DB file
 	oldPath := db.FilePath
 	newPath := fmt.Sprintf("%s/%s.csv", coll.Path, newDBName)
@@ -171,7 +171,6 @@ func (coll *Collection) RenameDB(oldDBName string, newDBName string) {
 		log.Fatal(err)
 	}
 }
-
 
 // Outputs a list of all databases in the collection
 func (coll *Collection) ListDBs() {
