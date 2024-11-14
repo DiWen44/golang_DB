@@ -1,4 +1,4 @@
-module go_jsondb
+module github.com/golang_db
 
 go 1.23.1
 

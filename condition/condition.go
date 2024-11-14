@@ -1,6 +1,7 @@
 package condition
 
 import (
+	"github.com/golang_db/utils"
 	"regexp"
 )
 
@@ -105,44 +106,44 @@ func ResolveCondition(conditionStr string, entry map[string]string) bool {
 	// Symbol and operand stack hold strings representing the actual content of tokens
 	// operand stack contains operand strings
 	// symbol stack contains operator strings and bracket strings
-	symbolStack := makeStack[string]()
-	operandStack := makeStack[string]()
-	boolStack := makeStack[bool]()
+	symbolStack := utils.MakeStack[string]()
+	operandStack := utils.MakeStack[string]()
+	boolStack := utils.MakeStack[bool]()
 
 	for _, token := range tokens {
 		switch token.kind {
 
 		case OPERATOR: // Push operators and opening brackets onto symbol stack
-			symbolStack.push(token.content)
+			symbolStack.Push(token.content)
 		case OPENING_BRACKET:
-			symbolStack.push(token.content)
+			symbolStack.Push(token.content)
 
 		case COLUMN_OPERAND: // Put entry's value at that column on operand stack
-			operandStack.push(entry[token.content])
+			operandStack.Push(entry[token.content])
 
 		case LITERAL_OPERAND: // Put literals on operand stack
-			operandStack.push(token.content)
+			operandStack.Push(token.content)
 
 		case CLOSING_BRACKET: // If closing bracket, apply operation at top of stack
 
-			operator := symbolStack.pop() // Pop last-read operator
-			_ = symbolStack.pop()         // Symbol before an actual operator token (that was just popped) should always be an opening bracket token, so pop that opening bracket as well
+			operator := symbolStack.Pop() // Pop last-read operator
+			_ = symbolStack.Pop()         // Symbol before an actual operator token (that was just popped) should always be an opening bracket token, so pop that opening bracket as well
 			var res bool
 
 			// If operator is AND/OR, pop top 2 elems from bool stack, apply operation, then push the result back to bool stack
 			// If operator isn't AND/OR, do the same but pop the top 2 elems from operand stack instead of bool stack
 			if operator == "&" {
-				o1 := boolStack.pop()
-				o2 := boolStack.pop()
+				o1 := boolStack.Pop()
+				o2 := boolStack.Pop()
 				res = o1 && o2
 			} else if operator == "|" {
-				o1 := boolStack.pop()
-				o2 := boolStack.pop()
+				o1 := boolStack.Pop()
+				o2 := boolStack.Pop()
 				res = o1 || o2
 			} else {
 
-				o1 := operandStack.pop()
-				o2 := operandStack.pop()
+				o1 := operandStack.Pop()
+				o2 := operandStack.Pop()
 
 				switch operator {
 				case "=":
@@ -159,12 +160,12 @@ func ResolveCondition(conditionStr string, entry map[string]string) bool {
 					res = o1 >= o2
 				}
 			}
-			boolStack.push(res)
+			boolStack.Push(res)
 
 		default:
 			continue
 		}
 	}
 
-	return boolStack.pop() // Final result is only element left on boolstack
+	return boolStack.Pop() // Final result is only element left on boolstack
 }
