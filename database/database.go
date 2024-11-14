@@ -1,9 +1,10 @@
-package main
+package database
 
 import (
 	"fmt"
 	"github.com/golang_db/utils"
 	"log"
+	"math/rand/v2"
 	"os"
 )
 
@@ -54,10 +55,17 @@ func (db *Database) Insert(providedCols []string, values []string) error {
 	entry := ""
 	for _, col := range db.Columns {
 
-		// User has provided a value for this column if col in colValuesMap
+		//  If col is a key in colValuesMap, the user has provided a value for this column
 		value, valueProvided := colValuesMap[col]
 		if valueProvided {
 			entry += value
+		}
+
+		// Add an id for the entry
+		if col == "id" {
+			// Replace the random number w/ an auto-increment feature
+			// with the counter stored in DB metadata file
+			entry += fmt.Sprintf("%d", rand.IntN(100))
 		}
 
 		// If cell not at last column, add comma to end, Otherwise add newline
@@ -87,11 +95,22 @@ func (db *Database) Insert(providedCols []string, values []string) error {
 
 // Select Returns some selected entries from a database that match a given condition string
 //
-// PARAMS:
+// PARAMS: conditionStr - condition string
+// RETURNS: A slice of strings that each represent an entry matching the condition
 //
-//	conditionStr - condition string
-//
-// RETURNS: A slice of map[string]strings that each represent an entry matching the condition
-func (db *Database) Select(conditionStr string) {
+//	The strings in the slice are arranged in order of the columns to which they belong
+//	(first string in slice will belong to first column, etc.)
+/* func (db *Database) Select(conditionStr string) []string {
 
 }
+*/
+
+// Update Updates column values of all entries from a database that match a given condition string
+// PARAMS: conditionStr - condition string
+func (db *Database) Update(conditionStr string) {
+
+}
+
+// Delete Deletes all entries from a database that match a given condition string
+// PARAMS: conditionStr - condition string
+func (db *Database) Delete(conditionStr string) {}
