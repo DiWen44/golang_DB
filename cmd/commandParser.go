@@ -1,7 +1,8 @@
-package main
+package cmd
 
 import (
 	"fmt"
+	"github.com/golang_db/internal"
 	"os"
 	"strings"
 )
@@ -33,7 +34,7 @@ func errorIfUnexpectedNumArgs(expected int, args []string) *parserError {
 	return nil
 }
 
-func Parse(command string, coll *Collection) {
+func Parse(command string, coll *internal.Collection) {
 	tokens := strings.Split(command, " ")
 	opcode := tokens[0]
 	args := tokens[1:]
@@ -79,7 +80,7 @@ func Parse(command string, coll *Collection) {
 		db, foundKey := coll.DBs[dbName]
 		// Raise non-fatal error & return from method if invalid database name provided
 		if !foundKey {
-			err2 := collError{fmt.Sprintf("NO DATABASE CALLED '%s' IN COLLECTION '%s'", dbName, coll.Name)}
+			err2 := internal.collError{fmt.Sprintf("NO DATABASE CALLED '%s' IN COLLECTION '%s'", dbName, coll.Name)}
 			fmt.Println(err2.Error())
 			return
 		}
@@ -93,7 +94,7 @@ func Parse(command string, coll *Collection) {
 		db, foundKey := coll.DBs[dbName]
 		// Raise non-fatal error & return from method if invalid database name provided
 		if !foundKey {
-			err := collError{fmt.Sprintf("NO DATABASE CALLED '%s' IN COLLECTION '%s'", dbName, coll.Name)}
+			err := internal.collError{fmt.Sprintf("NO DATABASE CALLED '%s' IN COLLECTION '%s'", dbName, coll.Name)}
 			fmt.Println(err.Error())
 			return
 		}

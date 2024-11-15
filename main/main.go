@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/golang_db/internal"
 	"log"
 	"os"
 	"strings"
@@ -13,9 +14,9 @@ func main() {
 	// Desired collection to open is provided as an OS arg
 	collectionName := os.Args[1]
 
-	currentCollection, err := LoadCollection(collectionName)
+	currentCollection, err := internal.LoadCollection(collectionName)
 	if err != nil { // If collection does not exist, make new one under that name
-		currentCollection := MakeNewCollection(collectionName)
+		currentCollection := internal.MakeNewCollection(collectionName)
 		fmt.Println("CREATED NEW COLLECTION: " + currentCollection.Name)
 	} else {
 		fmt.Println("LOADED COLLECTION: " + currentCollection.Name)

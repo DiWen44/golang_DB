@@ -1,7 +1,7 @@
-package condition
+package internal
 
 import (
-	"github.com/golang_db/utils"
+	"github.com/golang_db/internal/utils"
 	"regexp"
 )
 

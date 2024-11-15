@@ -1,8 +1,8 @@
-package database
+package internal
 
 import (
 	"fmt"
-	"github.com/golang_db/utils"
+	"github.com/golang_db/internal/utils"
 	"log"
 	"math/rand/v2"
 	"os"

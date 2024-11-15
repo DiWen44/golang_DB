@@ -1,9 +1,8 @@
-package main
+package internal
 
 import (
 	"bufio"
 	"fmt"
-	"github.com/golang_db/database"
 	"github.com/joho/godotenv"
 	"log"
 	"os"
@@ -22,15 +21,16 @@ import (
 type Collection struct {
 	Name string
 	Path string
-	DBs  map[string]*database.Database
+	DBs  map[string]*Database
 }
 
-// Error type for all collection-related errors
-type collError struct {
+// CollError Error type for all collection-related errors
+// This type is exported - we may want to create and raise CollErrors in the commandParser, for instance
+type CollError struct {
 	message string
 }
 
-func (e *collError) Error() string {
+func (e *CollError) Error() string {
 	return fmt.Sprintf("COLLECTION ERROR: %s", e.message)
 }
 
@@ -62,7 +62,7 @@ func LoadCollection(name string) (*Collection, error) {
 	}
 
 	// Load databases into dbs map
-	dbs := make(map[string]*database.Database)
+	dbs := make(map[string]*Database)
 	for _, filename := range filenames {
 		dbName := filename[:len(filename)-4] // Remove last 5 characters (i.e. '.json' extension) from filename to get database's name
 		dbFilePath := fmt.Sprintf("%s/%s", collectionPath, filename)
@@ -87,7 +87,7 @@ func MakeNewCollection(name string) *Collection {
 	}
 
 	// Empty slice of dbs, since collection is new
-	dbs := make(map[string]*database.Database)
+	dbs := make(map[string]*Database)
 	return &Collection{Name: name, Path: collection_path, DBs: dbs}
 }
 
@@ -121,7 +121,7 @@ func (coll *Collection) NewDB(DBName string, columns ...string) {
 	}
 
 	// Add DB to active collection
-	coll.DBs[DBName] = &database.Database{FilePath: DBPath, Columns: columns}
+	coll.DBs[DBName] = &Database{FilePath: DBPath, Columns: columns}
 }
 
 // Loads a database from an existing file into a database object
@@ -132,7 +132,7 @@ func (coll *Collection) NewDB(DBName string, columns ...string) {
 // and so doesn't add the DB to the collection's DB map
 //
 // PARAMS: filePath - path to JSON file associated with DB to load
-func loadDB(filePath string) *database.Database {
+func loadDB(filePath string) *Database {
 	// Load DB file
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -146,7 +146,7 @@ func loadDB(filePath string) *database.Database {
 	columnStr := lineScanner.Text()
 	columns := strings.Split(columnStr, ",")
 
-	res := &database.Database{FilePath: filePath, Columns: columns}
+	res := &Database{FilePath: filePath, Columns: columns}
 	return res
 }
 
@@ -162,7 +162,7 @@ func (coll *Collection) DropDB(dbName string) error {
 	filepath := fmt.Sprintf("%s/%s.csv", coll.Path, dbName)
 	err := os.Remove(filepath)
 	if err != nil {
-		return &collError{fmt.Sprintf("NO DATABASE CALLED '%s' IN COLLECTION '%s'", dbName, coll.Name)}
+		return &CollError{fmt.Sprintf("NO DATABASE CALLED '%s' IN COLLECTION '%s'", dbName, coll.Name)}
 	}
 
 	// Remove DB from collection object's DB map
@@ -181,7 +181,7 @@ func (coll *Collection) RenameDB(oldDBName string, newDBName string) error {
 	// Rename DB in collection by adding new pair under new name and deleting old entry
 	db, foundKey := coll.DBs[oldDBName]
 	if !foundKey {
-		return &collError{fmt.Sprintf("NO DATABASE CALLED '%s' IN COLLECTION '%s'", oldDBName, coll.Name)}
+		return &CollError{fmt.Sprintf("NO DATABASE CALLED '%s' IN COLLECTION '%s'", oldDBName, coll.Name)}
 	}
 	coll.DBs[newDBName] = db
 	delete(coll.DBs, oldDBName)
